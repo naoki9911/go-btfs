@@ -116,9 +116,7 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 						ctx, _ := context.WithTimeout(context.Background(), 7*time.Second)
 						id, _ := peer.IDB58Decode(host)
 						err := rss.CtxParams.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id})
-						if err != nil {
-							fmt.Println("err", err)
-						}
+						fmt.Println("err", err)
 						wg.Done()
 					}(h)
 				}
