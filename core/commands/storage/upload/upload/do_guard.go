@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -104,20 +105,24 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 	}
 	go func() {
 		for {
-			tick := time.Tick(1 * time.Second)
 			select {
 			case <-rss.Ctx.Done():
 				return
-			case <-tick:
 			default:
+				wg := sync.WaitGroup{}
 				for _, h := range selectedHosts {
-					ctx, _ := context.WithTimeout(rss.Ctx, 3*time.Second)
-					id, _ := peer.IDB58Decode(h)
-					err := rss.CtxParams.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id})
-					if err != nil {
-						fmt.Println("err", err)
-					}
+					wg.Add(1)
+					go func(host string) {
+						ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+						id, _ := peer.IDB58Decode(host)
+						err := rss.CtxParams.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id})
+						if err != nil {
+							fmt.Println("err", err)
+						}
+						wg.Done()
+					}(h)
 				}
+				wg.Wait()
 			}
 		}
 	}()
