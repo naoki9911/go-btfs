@@ -3,6 +3,7 @@ package helper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -30,14 +31,20 @@ type CustomizedHostsProvider struct {
 
 func (p *CustomizedHostsProvider) NextValidHost(price int64) (string, error) {
 	for true {
-		if index, err := p.AddIndex(); err == nil {
+		index, err := p.AddIndex()
+		fmt.Println("index", index, "err", err)
+		if err == nil {
 			id, err := peer.IDB58Decode(p.hosts[index])
 			if err != nil {
+				fmt.Printf("decode err", err)
 				continue
 			}
+			fmt.Println("index", index, "id", id)
 			if err := p.cp.Api.Swarm().Connect(p.cp.Ctx, peer.AddrInfo{ID: id}); err != nil {
+				fmt.Println("index", index, "id", id, "err", err)
 				continue
 			}
+			fmt.Println("index", index, "id", id, "err2", err)
 			return p.hosts[index], nil
 		} else {
 			break
@@ -50,7 +57,7 @@ func GetCustomizedHostsProvider(cp *ContextParams, hosts []string) IHostsProvide
 	return &CustomizedHostsProvider{
 		cp:      cp,
 		current: -1,
-		hosts:   hosts,
+		hosts:   append(hosts, hosts...),
 	}
 }
 
@@ -58,6 +65,7 @@ func (p *CustomizedHostsProvider) AddIndex() (int, error) {
 	p.Lock()
 	defer p.Unlock()
 	p.current++
+	fmt.Println("current", p.current, "len(hosts)", len(p.hosts))
 	if p.current >= len(p.hosts) {
 		return -1, errors.New("Index exceeds array bounds.")
 	}

@@ -148,6 +148,7 @@ the shard and replies back to client for the next challenge step.`,
 				if err != nil {
 					return err
 				}
+				fmt.Println("before recvcontract...")
 				_, err = remote.P2PCall(ctxParams.Ctx, ctxParams.N, requestPid, "/storage/upload/recvcontract",
 					ssId,
 					shardHash,
@@ -155,19 +156,23 @@ the shard and replies back to client for the next challenge step.`,
 					signedEscrowContractBytes,
 					signedGuardContractBytes,
 				)
+				fmt.Println("before recvcontract...", "err", err)
 				if err != nil {
 					return err
 				}
 				// check payment
 				signedContractID, err := signContractID(escrowContract.ContractId, ctxParams.N.PrivateKey)
+				fmt.Println("done signContractID...", "err", err)
 				if err != nil {
 					return err
 				}
 				// check payment
 
 				paidIn := make(chan bool)
+				fmt.Println("check payin...")
 				go checkPaymentFromClient(ctxParams, paidIn, signedContractID)
 				paid := <-paidIn
+				fmt.Println("done checked payin...", "paid", paid)
 				if !paid {
 					return fmt.Errorf("contract is not paid: %s", escrowContract.ContractId)
 				}
@@ -180,7 +185,9 @@ the shard and replies back to client for the next challenge step.`,
 				if err != nil {
 					return err
 				}
+				fmt.Println("before downloadShardFromClient...")
 				err = downloadShardFromClient(ctxParams, halfSignedGuardContract, req.Arguments[1], shardHash)
+				fmt.Println("before downloadShardFromClient...", "err", err)
 				if err != nil {
 					return err
 				}
@@ -201,6 +208,7 @@ the shard and replies back to client for the next challenge step.`,
 				// req.Context obsolete
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 				defer cancel()
+				fmt.Println("before send to guard...")
 				err = grpc.GuardClient(ctxParams.Cfg.Services.GuardDomain).WithContext(ctx,
 					func(ctx context.Context, client guardpb.GuardServiceClient) error {
 						_, err = client.ReadyForChallenge(ctx, in)
@@ -209,12 +217,16 @@ the shard and replies back to client for the next challenge step.`,
 						}
 						return nil
 					})
+				fmt.Println("after send to guard...", "err", err)
 				if err != nil {
 					return err
 				}
+				fmt.Println("before complete...")
 				if err := shard.Complete(); err != nil {
+					fmt.Println("after complete...", "err", err)
 					return err
 				}
+				fmt.Println("after complete...")
 				return nil
 			}()
 			if tmp != nil {

@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
@@ -80,6 +81,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				for err := range errChan {
 					c++
 					if err != nil {
+						fmt.Println("errChan err", err)
 						return err
 					}
 					if c == 2 {
@@ -110,12 +112,12 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 						switch err.(type) {
 						case remote.IoError:
 							// NOP
-							log.Debug("io error", err)
+							log.Error("io error", err)
 						case remote.BusinessError:
-							log.Debug("write remote.BusinessError", h, err)
+							log.Error("write remote.BusinessError", h, err)
 							cb <- err
 						default:
-							log.Debug("write default err", h, err)
+							log.Error("write default err", h, err)
 							cb <- err
 						}
 					}
@@ -125,12 +127,14 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 				select {
 				case err = <-cb:
 					ShardErrChanMap.Remove(contractId)
+					fmt.Println("cb err", err)
 					return err
 				case <-tick:
 					return errors.New("host timeout")
 				}
 			}, helper.HandleShardBo)
 			if err != nil {
+				fmt.Println("final err", err)
 				_ = rss.To(sessions.RssToErrorEvent, err)
 			}
 		}(shardIndexes[index], shardHash)
