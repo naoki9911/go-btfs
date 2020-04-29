@@ -41,7 +41,7 @@ var (
 	HandleShardBo = func() *backoff.ExponentialBackOff {
 		bo := backoff.NewExponentialBackOff()
 		bo.InitialInterval = 1 * time.Second
-		bo.MaxElapsedTime = 300 * time.Second
+		bo.MaxElapsedTime = 10 * time.Minute
 		bo.Multiplier = 1
 		bo.MaxInterval = 1 * time.Second
 		return bo

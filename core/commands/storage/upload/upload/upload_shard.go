@@ -22,6 +22,7 @@ func UploadShard(rss *sessions.RenterSession, hp helper.IHostsProvider, price in
 			err := backoff.Retry(func() error {
 				select {
 				case <-rss.Ctx.Done():
+					fmt.Println("<-rss.Ctx.Done()")
 					return nil
 				default:
 					break
