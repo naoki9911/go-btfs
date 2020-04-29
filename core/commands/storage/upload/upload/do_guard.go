@@ -113,7 +113,7 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 				for _, h := range selectedHosts {
 					wg.Add(1)
 					go func(host string) {
-						ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+						ctx, _ := context.WithTimeout(context.Background(), 7*time.Second)
 						id, _ := peer.IDB58Decode(host)
 						err := rss.CtxParams.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id})
 						if err != nil {
