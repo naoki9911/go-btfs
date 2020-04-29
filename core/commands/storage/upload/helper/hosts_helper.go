@@ -16,6 +16,7 @@ import (
 const (
 	minimumHosts = 30
 	failMsg      = "failed to find more valid hosts, please try again later"
+	parallelism  = 10
 )
 
 type IHostsProvider interface {
@@ -134,12 +135,27 @@ LOOP:
 				needHigherPrice = true
 				continue
 			}
-			ctx, _ := context.WithTimeout(p.ctx, 3*time.Second)
-			if err := p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id}); err != nil {
-				p.Lock()
-				p.hosts = append(p.hosts, host)
-				p.Unlock()
-				continue
+			ctx, _ := context.WithTimeout(p.ctx, 7*time.Second)
+
+			errChan := make(chan error)
+			for i := 0; i < parallelism; i++ {
+				go func() {
+					errChan <- p.cp.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id})
+				}()
+			}
+			tryCount := 0
+			for err := range errChan {
+				fmt.Println("index", index, "id", id, "err", err)
+				tryCount++
+				if err == nil {
+					break
+				}
+				if tryCount == parallelism {
+					p.Lock()
+					p.hosts = append(p.hosts, host)
+					p.Unlock()
+					continue LOOP
+				}
 			}
 			return host.NodeId, nil
 		} else {
