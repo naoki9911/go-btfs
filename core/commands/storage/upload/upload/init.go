@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"strconv"
 	"time"
 
@@ -295,7 +296,9 @@ func checkPaymentFromClient(ctxParams *uh.ContextParams, paidIn chan bool, contr
 
 func downloadShardFromClient(ctxParams *uh.ContextParams, guardContract *guardpb.Contract, fileHash string,
 	shardHash string) error {
-
+	ctx, _ := context.WithTimeout(context.Background(), 7*time.Second)
+	err := ctxParams.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: "16Uiu2HAm3Mw7YsZS3f5KH8VS4fnmdKxgQ1NNPugX7DpM5TQZP9uw"})
+	fmt.Println("err", err)
 	// Get + pin to make sure it does not get accidentally deleted
 	// Sharded scheme as special pin logic to add
 	// file root dag + shard root dag + metadata full dag + only this shard dag
