@@ -32,10 +32,10 @@ var (
 
 	WaitUploadBo = func() *backoff.ExponentialBackOff {
 		bo := backoff.NewExponentialBackOff()
-		bo.InitialInterval = 1 * time.Second
+		bo.InitialInterval = 30 * time.Second
 		bo.MaxElapsedTime = 24 * time.Hour
-		bo.Multiplier = 1.5
-		bo.MaxInterval = 1 * time.Minute
+		bo.Multiplier = 1
+		bo.MaxInterval = 30 * time.Second
 		return bo
 	}()
 	HandleShardBo = func() *backoff.ExponentialBackOff {
