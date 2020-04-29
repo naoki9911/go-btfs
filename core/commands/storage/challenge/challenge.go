@@ -54,6 +54,9 @@ still store a piece of file (usually a shard) as agreed in storage contract.`,
 			return err
 		}
 
+		guardId, b := remote.GetStreamRequestRemotePeerID(req, n)
+		fmt.Println("guard id", guardId, "b", b)
+
 		// Check if peer is reachable
 		pi, err := remote.FindPeer(req.Context, n, req.Arguments[0])
 		if err != nil {
