@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/libp2p/go-libp2p-core/peer"
+
 	"github.com/TRON-US/go-btfs/core/commands/storage/upload/guard"
 	uh "github.com/TRON-US/go-btfs/core/commands/storage/upload/helper"
 	"github.com/TRON-US/go-btfs/core/commands/storage/upload/sessions"
@@ -25,6 +27,7 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 		return err
 	}
 	cts := make([]*guardpb.Contract, 0)
+	selectedHosts := make([]string, 0)
 	for i, h := range rss.ShardHashes {
 		shard, err := sessions.GetRenterShard(rss.CtxParams, rss.SsId, h, i)
 		if err != nil {
@@ -38,6 +41,7 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 		contracts.SignedGuardContract.EscrowSignedTime = res.Result.EscrowSignedTime
 		contracts.SignedGuardContract.LastModifyTime = time.Now()
 		cts = append(cts, contracts.SignedGuardContract)
+		selectedHosts = append(selectedHosts, contracts.SignedGuardContract.HostPid)
 	}
 	fsStatus, err := newFileStatus(cts, rss.CtxParams.Cfg, cts[0].ContractMeta.RenterPid, rss.Hash, fileSize)
 	if err != nil {
@@ -98,6 +102,22 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 	if err != nil {
 		return fmt.Errorf("failed to send challenge questions to guard: [%v]", err)
 	}
+	go func() {
+		for {
+			tick := time.Tick(1 * time.Second)
+			select {
+			case <-rss.Ctx.Done():
+				return
+			case <-tick:
+			default:
+				for _, h := range selectedHosts {
+					ctx, _ := context.WithTimeout(rss.Ctx, 3*time.Second)
+					id, _ := peer.IDB58Decode(h)
+					rss.CtxParams.Api.Swarm().Connect(ctx, peer.AddrInfo{ID: id})
+				}
+			}
+		}
+	}()
 	return waitUpload(rss, offlineSigning, fsStatus.RenterPid)
 }
 

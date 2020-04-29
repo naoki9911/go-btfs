@@ -3,6 +3,7 @@ package upload
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -88,8 +89,8 @@ func waitUpload(rss *sessions.RenterSession, offlineSigning bool, renterId strin
 						num++
 					}
 				}
-				log.Infof("%d shards uploaded.", num)
-				if num >= int(threshold) {
+				fmt.Printf("%d shards uploaded.\n", num)
+				if num >= threshold {
 					return nil
 				}
 				return errors.New("uploading")
