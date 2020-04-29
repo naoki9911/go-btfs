@@ -96,6 +96,7 @@ the challenge request back to the caller.`,
 	},
 	RunTimeout: 3 * time.Second,
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
+		fmt.Println("contract-id", req.Arguments[0], req.Arguments[1], req.Arguments[2], req.Arguments[3], req.Arguments[4])
 		cfg, err := cmdenv.GetConfig(env)
 		if err != nil {
 			return err
@@ -104,6 +105,7 @@ the challenge request back to the caller.`,
 			return fmt.Errorf("storage host api not enabled")
 		}
 
+		fmt.Println("do challenge response... 1")
 		n, err := cmdenv.GetNode(env)
 		if err != nil {
 			return err
@@ -129,11 +131,15 @@ the challenge request back to the caller.`,
 		}
 		nonce := req.Arguments[4]
 		// Get (cached) challenge response object and solve challenge
+		fmt.Println("do challenge response... 2")
 		sc, err := NewStorageChallengeResponse(req.Context, n, api, fileHash, shardHash, "", false, 0)
+		fmt.Println("do challenge response... 3", "err", err)
 		if err != nil {
 			return err
 		}
+		fmt.Println("do challenge response... 4")
 		err = sc.SolveChallenge(chunkIndex, nonce)
+		fmt.Println("do challenge response... 5", "err", err)
 		if err != nil {
 			return err
 		}
