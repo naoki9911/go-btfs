@@ -105,10 +105,11 @@ func doGuard(rss *sessions.RenterSession, res *escrowpb.SignedPayinResult, fileS
 	}
 	go func() {
 		for {
+			tick := time.Tick(3 * time.Second)
 			select {
 			case <-rss.Ctx.Done():
 				return
-			default:
+			case <-tick:
 				wg := sync.WaitGroup{}
 				for _, h := range selectedHosts {
 					wg.Add(1)
